@@ -1,0 +1,1175 @@
+{
+  "info": {
+    "name": "objstore",
+    "description": "API S3 dan API admin objstore.\n\nAutentikasi memakai AWS Signature (SigV4) di level collection, service `s3`. Isi variabel\n`accessKey` dan `secretKey` (kredensial root dari OBJSTORE_ACCESS_KEY/OBJSTORE_SECRET_KEY, atau token)\ndi environment Postman atau di kolom Current value, supaya secret tidak ikut tersimpan saat collection diekspor.\n\nUntuk kredensial sementara, isi juga `sessionToken`.\n\nFolder disusun supaya bisa dijalankan berurutan (Run collection) di server kosong; Cleanup menghapus bucket contoh di akhir.\nRequest yang membuat token atau multipart upload menyimpan id-nya ke variabel collection secara otomatis.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "awsv4",
+    "awsv4": [
+      {
+        "key": "accessKey",
+        "value": "{{accessKey}}",
+        "type": "string"
+      },
+      {
+        "key": "secretKey",
+        "value": "{{secretKey}}",
+        "type": "string"
+      },
+      {
+        "key": "region",
+        "value": "{{region}}",
+        "type": "string"
+      },
+      {
+        "key": "service",
+        "value": "s3",
+        "type": "string"
+      },
+      {
+        "key": "sessionToken",
+        "value": "{{sessionToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9000"
+    },
+    {
+      "key": "region",
+      "value": "us-east-1"
+    },
+    {
+      "key": "accessKey",
+      "value": ""
+    },
+    {
+      "key": "secretKey",
+      "value": ""
+    },
+    {
+      "key": "sessionToken",
+      "value": ""
+    },
+    {
+      "key": "bucket",
+      "value": "contoh-bucket"
+    },
+    {
+      "key": "key",
+      "value": "folder/halo.txt"
+    },
+    {
+      "key": "copyKey",
+      "value": "folder/halo-salinan.txt"
+    },
+    {
+      "key": "tokenId",
+      "value": ""
+    },
+    {
+      "key": "uploadId",
+      "value": ""
+    },
+    {
+      "key": "partEtag",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Tanpa autentikasi.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/healthz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "healthz"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "S3 - Buckets",
+      "description": "",
+      "item": [
+        {
+          "name": "List buckets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create bucket",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Head bucket",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get bucket location",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "location",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List objects V2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?list-type=2&prefix=folder/&delimiter=/&max-keys=1000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "list-type",
+                  "value": "2"
+                },
+                {
+                  "key": "prefix",
+                  "value": "folder/"
+                },
+                {
+                  "key": "delimiter",
+                  "value": "/"
+                },
+                {
+                  "key": "max-keys",
+                  "value": "1000"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List objects V1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?prefix=&marker=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "prefix",
+                  "value": ""
+                },
+                {
+                  "key": "marker",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "S3 - Bucket config",
+      "description": "CORS dan lifecycle; butuh token admin.",
+      "item": [
+        {
+          "name": "Put bucket CORS",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?cors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "cors",
+                  "value": null
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "<CORSConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n  <CORSRule>\n    <AllowedOrigin>http://localhost:3000</AllowedOrigin>\n    <AllowedMethod>GET</AllowedMethod>\n    <AllowedMethod>PUT</AllowedMethod>\n    <AllowedHeader>*</AllowedHeader>\n    <ExposeHeader>ETag</ExposeHeader>\n    <MaxAgeSeconds>3600</MaxAgeSeconds>\n  </CORSRule>\n</CORSConfiguration>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get bucket CORS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?cors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "cors",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete bucket CORS",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?cors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "cors",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Put bucket lifecycle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?lifecycle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "lifecycle",
+                  "value": null
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "<LifecycleConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n  <Rule>\n    <ID>hapus-tmp</ID>\n    <Status>Enabled</Status>\n    <Filter><Prefix>tmp/</Prefix></Filter>\n    <Expiration><Days>7</Days></Expiration>\n  </Rule>\n  <Rule>\n    <ID>ia-arsip</ID>\n    <Status>Enabled</Status>\n    <Filter><Prefix>arsip/</Prefix></Filter>\n    <Transition><Days>30</Days><StorageClass>STANDARD_IA</StorageClass></Transition>\n  </Rule>\n  <Rule>\n    <ID>bersihkan-multipart</ID>\n    <Status>Enabled</Status>\n    <Filter><Prefix></Prefix></Filter>\n    <AbortIncompleteMultipartUpload><DaysAfterInitiation>3</DaysAfterInitiation></AbortIncompleteMultipartUpload>\n  </Rule>\n</LifecycleConfiguration>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get bucket lifecycle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?lifecycle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "lifecycle",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete bucket lifecycle",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?lifecycle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "lifecycle",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "S3 - Objects",
+      "description": "",
+      "item": [
+        {
+          "name": "Put object",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "x-amz-meta-penulis",
+                "value": "postman"
+              },
+              {
+                "key": "x-amz-storage-class",
+                "value": "STANDARD"
+              },
+              {
+                "key": "If-None-Match",
+                "value": "*",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "Halo dari Postman!"
+            },
+            "description": "Untuk upload file, ganti body ke binary. Aktifkan If-None-Match: * supaya gagal kalau object sudah ada."
+          },
+          "response": []
+        },
+        {
+          "name": "Head object",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "x-amz-checksum-mode",
+                "value": "ENABLED"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get object",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Range",
+                "value": "bytes=0-99",
+                "disabled": true
+              },
+              {
+                "key": "If-None-Match",
+                "value": "\"etag\"",
+                "disabled": true
+              },
+              {
+                "key": "x-amz-checksum-mode",
+                "value": "ENABLED",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Copy object",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-amz-copy-source",
+                "value": "/{{bucket}}/{{key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{copyKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{copyKey}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete object",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete objects (batch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "delete",
+                  "value": null
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "<Delete xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n  <Object><Key>{{key}}</Key></Object>\n  <Object><Key>{{copyKey}}</Key></Object>\n  <Quiet>false</Quiet>\n</Delete>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "S3 - Multipart",
+      "description": "Jalankan berurutan. Semua part kecuali yang terakhir minimal 5 MiB, jadi contoh ini memakai satu part saja.",
+      "item": [
+        {
+          "name": "Create multipart upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}?uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ],
+              "query": [
+                {
+                  "key": "uploads",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const m = pm.response.text().match(/<UploadId>([^<]+)<\\/UploadId>/);",
+                  "if (m) pm.collectionVariables.set('uploadId', m[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload part",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}?partNumber=1&uploadId={{uploadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ],
+              "query": [
+                {
+                  "key": "partNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "uploadId",
+                  "value": "{{uploadId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "Isi part pertama."
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('partEtag', pm.response.headers.get('ETag') || '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List parts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}?uploadId={{uploadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ],
+              "query": [
+                {
+                  "key": "uploadId",
+                  "value": "{{uploadId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List multipart uploads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}?uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ],
+              "query": [
+                {
+                  "key": "uploads",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete multipart upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}?uploadId={{uploadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ],
+              "query": [
+                {
+                  "key": "uploadId",
+                  "value": "{{uploadId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "<CompleteMultipartUpload xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n  <Part><PartNumber>1</PartNumber><ETag>{{partEtag}}</ETag></Part>\n</CompleteMultipartUpload>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Abort multipart upload (alternatif Complete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}?uploadId={{uploadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ],
+              "query": [
+                {
+                  "key": "uploadId",
+                  "value": "{{uploadId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Tokens",
+      "description": "API JSON di /-/admin/. Membuat dan mengelola token butuh admin-read-write tanpa batasan bucket.",
+      "item": [
+        {
+          "name": "Whoami",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/whoami",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "whoami"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"aplikasi\",\n  \"permission\": \"object-read-write\",\n  \"buckets\": [\n    \"{{bucket}}\"\n  ],\n  \"ttl_seconds\": 2592000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "permission: object-read, object-read-write, admin-read, admin-read-write. buckets kosong berarti semua bucket. ttl_seconds 0 berarti tanpa kedaluwarsa. Secret hanya muncul di respons ini."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('tokenId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens/{{tokenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens",
+                "{{tokenId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rotate token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens/{{tokenId}}/rotate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens",
+                "{{tokenId}}",
+                "rotate"
+              ]
+            },
+            "description": "Mengganti secret; secret baru hanya muncul di respons ini."
+          },
+          "response": []
+        },
+        {
+          "name": "Disable token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens/{{tokenId}}/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens",
+                "{{tokenId}}",
+                "disable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enable token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens/{{tokenId}}/enable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens",
+                "{{tokenId}}",
+                "enable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete token",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/tokens/{{tokenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "tokens",
+                "{{tokenId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Issue temp credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/temp-credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "temp-credentials"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ttl_seconds\": 3600,\n  \"permission\": \"object-read\",\n  \"buckets\": [\n    \"{{bucket}}\"\n  ],\n  \"prefixes\": [\n    \"folder/\"\n  ],\n  \"objects\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Menerbitkan kredensial sementara dari pemanggil. Izin dan cakupan tidak boleh melebihi milik pemanggil; TTL paling lama 7 hari. Pakai hasilnya di accessKey, secretKey, dan sessionToken."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Buckets",
+      "description": "Konfigurasi bucket yang tidak punya padanan di API S3.",
+      "item": [
+        {
+          "name": "Get bucket config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/buckets/{{bucket}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "buckets",
+                "{{bucket}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set public access",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/buckets/{{bucket}}/public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "buckets",
+                "{{bucket}}",
+                "public"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public\": true,\n  \"domains\": [\n    \"cdn.contoh.com\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "domains mengganti seluruh daftar custom domain. Kirim public false dan domains [] untuk mematikan."
+          },
+          "response": []
+        },
+        {
+          "name": "Set lock rules",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/-/admin/buckets/{{bucket}}/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "-",
+                "admin",
+                "buckets",
+                "{{bucket}}",
+                "lock"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rules\": [\n    {\n      \"id\": \"arsip\",\n      \"enabled\": true,\n      \"prefix\": \"arsip/\",\n      \"mode\": \"age\",\n      \"days\": 365\n    },\n    {\n      \"id\": \"audit\",\n      \"enabled\": true,\n      \"prefix\": \"audit/\",\n      \"mode\": \"date\",\n      \"until\": \"2030-01-01T00:00:00Z\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mengganti seluruh aturan. mode: age (days), date (until), indefinite. Kirim rules [] untuk menghapus semua."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "description": "Menghapus object contoh lalu bucket-nya. Bucket harus kosong untuk dihapus.",
+      "item": [
+        {
+          "name": "Delete object",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}/{{key}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}",
+                "{{key}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete bucket",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{bucket}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{bucket}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
